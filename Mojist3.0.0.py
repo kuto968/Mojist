@@ -207,7 +207,6 @@ class MojistApp:
         self.close_preset_edit()
 
     def open_adjust_window(self):
-        """総合調整ウィンドウを開く"""
         if self.adjust_window and self.adjust_window.winfo_exists():
             self.adjust_window.lift()
             return
@@ -317,7 +316,6 @@ class MojistApp:
         return panel
 
     def _create_color_panel(self, parent):
-        """「色の調整」用のパネルを作成する"""
         from tkinter.colorchooser import askcolor
 
         panel = tk.Frame(parent, padx=10, pady=10)
