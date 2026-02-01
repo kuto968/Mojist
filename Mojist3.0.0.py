@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk, messagebox, filedialog # ← filedialog を追加
+from tkinter import ttk, messagebox, filedialog
 from PIL import Image, ImageTk
 import tkinter.font as tkfont
 import os
@@ -11,7 +11,6 @@ class MojistApp:
     def __init__(self, root):
         self.root = root
         
-        # --- 基本設定と定数 ---
         self.BASE_DIR = self._get_base_dir()
         self.BG_FOLDER = self.BASE_DIR / "Image"
         self.ICON_PATH = self.BASE_DIR / "assets" / "favicon.ico"
@@ -22,7 +21,6 @@ class MojistApp:
         self.THUMBNAIL_SIZE = (160, 90)
         self.THUMBS_PER_PAGE = 9
 
-        # --- アプリケーションの状態を管理する変数 ---
         self.image = None
         self.photo = None
         self.font_list = sorted(f for f in tkfont.families() if "@" not in f)
@@ -30,64 +28,52 @@ class MojistApp:
         self.font_size = 50
         self.text_color = "white"
         self.outline_color = "black"
-        self.outline_width = 2 # 縁取りの太さ
+        self.outline_width = 2
         self.x, self.y = 512, 502
-        self.adjust_x, self.adjust_y = self.x, self.y # 調整ウィンドウ用の位置保存
+        self.adjust_x, self.adjust_y = self.x, self.y
 
         self.fixed_text = None
         self.preset_text = None
 
-        self.repeat_job = None # ボタン押し続け時の連続実行ジョブ
+        self.repeat_job = None
 
-        # --- サブウィンドウの状態 ---
         self.adjust_window = None
         self.preset_edit_window = None
         self.background_selector_window = None
         self.adjust_initial_text_color = ""
         self.adjust_initial_outline_color = ""
-        self.adjust_initial_outline_width = 0 # 調整開始時の縁の太さを保存
-        self.adjust_initial_font_size = 0 # 調整開始時のフォントサイズを保存
-        self.adjust_step = tk.IntVar(value=1) # 文字調整の移動ステップ数 (初期値: 1)
+        self.adjust_initial_outline_width = 0 
+        self.adjust_initial_font_size = 0 
+        self.adjust_step = tk.IntVar(value=1) 
         
-        # --- 背景セレクター用の状態 ---
         self.bg_image_files = []
         self.bg_total_pages = 1
         self.bg_current_page = 0
         self.bg_selected_index = None
-        self.bg_thumbs = [] # サムネイルのPhotoImageオブジェクトを保持
+        self.bg_thumbs = [] 
 
-        # --- ウィンドウの初期化 ---
         self._setup_window()
-        
-        # --- ウィジェットの作成 ---
         self._create_widgets()
-
-        # --- 初期画像の読み込みと表示 ---
         self._load_initial_image()
         self.update_text()
 
     def _get_base_dir(self):
-        """ 実行環境に応じてベースディレクトリを取得 """
         if getattr(sys, 'frozen', False):
             return Path(sys.executable).parent
         else:
             return Path(__file__).resolve().parent
 
     def _get_initial_font(self):
-        """ 利用可能なフォントから初期フォントを選択 """
         preferred_fonts = ["Meiryo", "MS UI Gothic", "Yu Gothic UI", "MS Gothic"]
         return next((f for f in preferred_fonts if f in self.font_list), self.font_list[0])
 
     def _setup_window(self):
-        """ メインウィンドウのタイトル、サイズ、アイコンなどを設定 """
         self.root.title("Mojist")
         self.root.geometry("1024x640")
         self.root.resizable(False, False)
-        # self.root.iconbitmap() の部分を削除
         self.root.bind("<Button-1>", self._on_window_click)
 
     def _load_initial_image(self):
-        """ 起動時の背景画像を読み込む """
         image_path = self.BG_FOLDER / "P000.png"
         try:
             if image_path.exists():
@@ -101,15 +87,9 @@ class MojistApp:
             self.canvas.create_image(0, 0, anchor=tk.NW, image=self.photo)
 
     def _create_widgets(self):
-        """ UI部品を作成して配置（レイアウト崩れ対策版） """
-        
-        # ↓★★ ここからレイアウト構造を全面的に変更 ★★
-
-        # --- コントロールエリア全体のフレームを、先にウィンドウ下部に配置する ---
         control_area = tk.Frame(self.root)
         control_area.pack(side=tk.BOTTOM, fill=tk.X, padx=10, pady=5)
 
-        # --- 上段フレーム (テキスト入力、フォント選択) ---
         top_frame = tk.Frame(control_area)
         top_frame.pack(fill=tk.X)
 
@@ -122,11 +102,9 @@ class MojistApp:
         self.font_combo.pack(side=tk.LEFT, padx=(10, 0))
         self.font_combo.bind("<<ComboboxSelected>>", self.change_font)
         
-        # --- 下段フレーム (各種ボタン) ---
         bottom_frame = tk.Frame(control_area)
         bottom_frame.pack(fill=tk.X, pady=(5, 0))
         
-        # (ボタンを配置するコードは、以前のままでOKです)
         tk.Button(bottom_frame, text="反映", command=self.toggle_fixed_text).pack(side=tk.LEFT)
         separator1 = ttk.Separator(bottom_frame, orient='vertical')
         separator1.pack(side=tk.LEFT, fill='y', padx=10, pady=5)
@@ -144,12 +122,10 @@ class MojistApp:
         tk.Button(bottom_frame, text="保存", command=self._save_project).pack(side=tk.LEFT)
         tk.Button(bottom_frame, text="呼び出し", command=self._load_project).pack(side=tk.LEFT, padx=5)
 
-        # --- Canvasを、残りのスペース全てを埋めるように配置する ---
         self.canvas = tk.Canvas(self.root, bg="white", highlightthickness=0)
         self.canvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
         self.canvas_image = self.canvas.create_image(0, 0, anchor=tk.NW)
 
-    # --- メイン機能メソッド ---
     def update_text(self):
         self.canvas.itemconfig(self.canvas_image, image=self.photo)
         self.canvas.delete("text")
@@ -157,19 +133,15 @@ class MojistApp:
         self.draw_text(self.x, self.y, main_text)
 
     def draw_text(self, x, y, text):
-        """文字と縁取りを描画する（塗りつぶし方式）"""
         font_tuple = (self.selected_font_name, self.font_size, "bold")
         offset = self.outline_width
 
-        # --- 縁取りの描画 ---
         if offset > 0:
             for dx in range(-offset, offset + 1):
                 for dy in range(-offset, offset + 1):
-                    # 円形に描画するためのチェック（dx^2 + dy^2 <= offset^2）
                     if dx**2 + dy**2 <= offset**2:
                         self.canvas.create_text(x + dx, y + dy, text=text, font=font_tuple, fill=self.outline_color, tags="text")
-
-        # --- 中心の文字の描画 ---
+                        
         self.canvas.create_text(x, y, text=text, font=font_tuple, fill=self.text_color, tags="text")
 
     def toggle_fixed_text(self):
@@ -184,7 +156,6 @@ class MojistApp:
         if event.widget not in (self.input_text, self.font_combo):
             self.root.focus_set()
 
-    # --- プリセット関連メソッド ---
     def register_preset(self):
         text = self.input_text.get()
         if len(text) > 100:
@@ -194,7 +165,6 @@ class MojistApp:
         self.show_preset()
 
     def reflect_preset(self):
-        """プリセットのテキストを画面に反映する（入力欄は変更しない）"""
         if self.preset_text:
             self.fixed_text = self.preset_text
             self.update_text()
@@ -242,14 +212,12 @@ class MojistApp:
             self.adjust_window.lift()
             return
 
-        # 調整開始前の状態を保存
         self.adjust_x, self.adjust_y = self.x, self.y
         self.adjust_initial_font_size = self.font_size
         self.adjust_initial_text_color = self.text_color
         self.adjust_initial_outline_color = self.outline_color
         self.adjust_initial_outline_width = self.outline_width
 
-        # ウィンドウの作成
         self.adjust_window = tk.Toplevel(self.root)
         self.adjust_window.title("総合調整")
         self.adjust_window.geometry("400x300")
@@ -257,27 +225,21 @@ class MojistApp:
         self.adjust_window.protocol("WM_DELETE_WINDOW", self._cancel_adjustments)
         self.adjust_window.grab_set()
 
-        # --- メインレイアウト (左:メニュー / 右:設定パネル) ---
         main_pane = tk.Frame(self.adjust_window)
         main_pane.pack(expand=True, fill=tk.BOTH, padx=5, pady=5)
 
-        # 左側のメニューフレーム (幅を狭く設定)
         left_frame = tk.Frame(main_pane, width=120, bd=2, relief="ridge")
         left_frame.pack(side=tk.LEFT, fill=tk.Y, padx=(0, 5))
         left_frame.pack_propagate(False)
 
-        # 右側の設定パネル用フレーム
         self.right_frame = tk.Frame(main_pane)
         self.right_frame.pack(side=tk.RIGHT, expand=True, fill=tk.BOTH)
 
-        # --- 左側メニューのボタン ---
         tk.Button(left_frame, text="位置調整", command=lambda: self._switch_adjust_panel("position")).pack(fill=tk.X, pady=5, padx=5)
         tk.Button(left_frame, text="サイズ調整", command=lambda: self._switch_adjust_panel("size")).pack(fill=tk.X, pady=5, padx=5)
         tk.Button(left_frame, text="色の調整", command=lambda: self._switch_adjust_panel("color")).pack(fill=tk.X, pady=5, padx=5)
         tk.Button(left_frame, text="縁の調整", command=lambda: self._switch_adjust_panel("outline")).pack(fill=tk.X, pady=5, padx=5)
-        # (ここに新しい調整項目を増やしていく)
 
-        # --- 各設定パネルの作成 ---
         self.adjust_panels = {
             "position": self._create_position_panel(self.right_frame),
             "size": self._create_size_panel(self.right_frame),
@@ -285,7 +247,6 @@ class MojistApp:
             "outline": self._create_outline_panel(self.right_frame)
         }
         
-        # --- 下部の決定/キャンセルボタン ---
         button_frame = tk.Frame(self.adjust_window)
         button_frame.pack(fill=tk.X, side=tk.BOTTOM, pady=5)
         tk.Button(button_frame, text="キャンセル", width=10, command=self._cancel_adjustments).pack(side=tk.RIGHT, padx=10)
@@ -336,7 +297,6 @@ class MojistApp:
         return panel
 
     def _create_size_panel(self, parent):
-        """「サイズ調整」用のパネルを作成する"""
         panel = tk.Frame(parent, padx=10, pady=10)
         
         size_label_frame = tk.Frame(panel)
@@ -355,8 +315,6 @@ class MojistApp:
         size_scale.set(self.font_size)
         size_scale.pack(expand=True, fill=tk.X)
         return panel
-    
-    # ↓★★ 以下の3つのメソッドを新しく追加 ★★
 
     def _create_color_panel(self, parent):
         """「色の調整」用のパネルを作成する"""
@@ -364,14 +322,12 @@ class MojistApp:
 
         panel = tk.Frame(parent, padx=10, pady=10)
 
-        # --- 文字色 ---
         text_color_frame = tk.Frame(panel)
         text_color_frame.pack(fill=tk.X, pady=5)
         tk.Button(text_color_frame, text="文字色", width=10, command=self._choose_text_color).pack(side=tk.LEFT)
         self.text_color_preview = tk.Frame(text_color_frame, width=100, height=25, bg=self.text_color, relief="sunken", bd=1)
         self.text_color_preview.pack(side=tk.LEFT, padx=10)
 
-        # --- 縁の色 ---
         outline_color_frame = tk.Frame(panel)
         outline_color_frame.pack(fill=tk.X, pady=5)
         tk.Button(outline_color_frame, text="縁の色", width=10, command=self._choose_outline_color).pack(side=tk.LEFT)
@@ -401,14 +357,12 @@ class MojistApp:
         return panel
 
     def _change_outline_width_from_slider(self, new_width_str):
-        """縁の太さ調整スライダーと連動して値を変更"""
         new_width = int(float(new_width_str))
         self.outline_width = new_width
         self.outline_width_label.config(text=str(new_width))
         self.update_text()
 
     def _choose_text_color(self):
-        """カラーチューザーを開いて文字色を選択する"""
         from tkinter.colorchooser import askcolor
         color_code = askcolor(title="文字色を選択", initialcolor=self.text_color)
         if color_code[1]:
@@ -417,7 +371,6 @@ class MojistApp:
             self.update_text()
 
     def _choose_outline_color(self):
-        """カラーチューザーを開いて縁の色を選択する"""
         from tkinter.colorchooser import askcolor
         color_code = askcolor(title="縁の色を選択", initialcolor=self.outline_color)
         if color_code[1]:
@@ -426,44 +379,37 @@ class MojistApp:
             self.update_text()
 
     def _move_text(self, dx, dy):
-        """位置調整パネルからのテキスト移動"""
         step = self.adjust_step.get()
         self.x += dx * step
         self.y += dy * step
         self.update_text()
     
     def _start_move(self, dx, dy):
-        """移動の開始。"""
         self._move_text(dx, dy)
         self.repeat_job = self.root.after(500, self._repeat_move, dx, dy)
 
     def _repeat_move(self, dx, dy):
-        """繰り返し移動処理"""
         self._move_text(dx, dy)
         self.repeat_job = self.root.after(100, self._repeat_move, dx, dy)
 
     def _stop_move(self, event):
-        """移動の停止。"""
         if self.repeat_job:
             self.root.after_cancel(self.repeat_job)
             self.repeat_job = None
 
     def _change_font_size_from_slider(self, new_size_str):
-        """サイズ調整スライダーと連動してフォントサイズを変更"""
         new_size = int(float(new_size_str))
         self.font_size = new_size
         self.size_value_label.config(text=str(new_size))
         self.update_text()
 
     def _confirm_adjustments(self):
-        """「決定」ボタン。"""
         if self.adjust_window and self.adjust_window.winfo_exists():
             self.adjust_window.grab_release()
             self.adjust_window.destroy()
         self.adjust_window = None
 
     def _cancel_adjustments(self):
-        """「キャンセル」ボタン。"""
         self.x, self.y = self.adjust_x, self.adjust_y
         self.font_size = self.adjust_initial_font_size
         self.text_color = self.adjust_initial_text_color
@@ -473,7 +419,6 @@ class MojistApp:
         self.update_text()
         self._confirm_adjustments()
 
-    # --- 背景変更ウィンドウ関連 ---
     def open_background_selector(self):
         if self.background_selector_window and self.background_selector_window.winfo_exists():
             self.background_selector_window.lift()
@@ -563,7 +508,7 @@ class MojistApp:
         self.background_selector_window = None
 
     def apply_background_image(self, path):
-        from tkinter import messagebox # messageboxをインポート
+        from tkinter import messagebox
 
         self.image_path = path
 
@@ -584,7 +529,6 @@ class MojistApp:
             self.update_text()
 
     def _save_project(self):
-        """現在の状態をJSONファイルに保存する"""
         project_data = {
             "text": self.input_text.get(),
             "font_name": self.selected_font_name,
@@ -615,7 +559,6 @@ class MojistApp:
             messagebox.showerror("保存エラー", f"プロジェクトの保存に失敗しました。\n\n詳細: {e}")
 
     def _load_project(self):
-        """JSONファイルから状態を復元する"""
         file_path = filedialog.askopenfilename(
             initialdir=self.PROJECTS_FOLDER,
             title="プロジェクトを呼び出し",
@@ -661,6 +604,3 @@ if __name__ == '__main__':
     root = tk.Tk()
     app = MojistApp(root)
     root.mainloop()
-
-# Mojist 3.0.0  by Waaaa24  (´･∀･`) 2025年7月3日午後4時09分
-# このコードを読んでいるあなた、なかなかのツワモノですね。
